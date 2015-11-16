@@ -37,8 +37,8 @@
 
 /* Define size for the receive and transmit buffer over CDC */
 /* It's up to user to redefine and/or remove those define */
-#define APP_RX_DATA_SIZE  64
-#define APP_TX_DATA_SIZE  64
+#define APP_RX_DATA_SIZE  128
+#define APP_TX_DATA_SIZE  128
 #define APP_MAX_DATA_SIZE 512
 
 /* Create buffer for reception and transmission           */
@@ -66,13 +66,12 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t *pbuf, uint16_t length);
 
 static int8_t CDC_Receive_FS(uint8_t *pbuf, uint32_t *Len);
 
-USBD_CDC_ItfTypeDef USBD_Interface_fops_FS =
-        {
-                CDC_Init_FS,
-                CDC_DeInit_FS,
-                CDC_Control_FS,
-                CDC_Receive_FS
-        };
+USBD_CDC_ItfTypeDef USBD_Interface_fops_FS = {
+        CDC_Init_FS,
+        CDC_DeInit_FS,
+        CDC_Control_FS,
+        CDC_Receive_FS
+};
 
 /**
   * @brief  CDC_Init_FS
@@ -110,41 +109,23 @@ static int8_t CDC_DeInit_FS(void) {
 static int8_t CDC_Control_FS(uint8_t cmd, uint8_t *pbuf, uint16_t length) {
     switch (cmd) {
         case CDC_SEND_ENCAPSULATED_COMMAND:
-
             break;
-
         case CDC_GET_ENCAPSULATED_RESPONSE:
-
             break;
-
         case CDC_SET_COMM_FEATURE:
-
             break;
-
         case CDC_GET_COMM_FEATURE:
-
             break;
-
         case CDC_CLEAR_COMM_FEATURE:
-
             break;
-
         case CDC_SET_LINE_CODING:
-
             break;
-
         case CDC_GET_LINE_CODING:
-
             break;
-
         case CDC_SET_CONTROL_LINE_STATE:
-
             break;
-
         case CDC_SEND_BREAK:
-
             break;
-
         default:
             break;
     }
@@ -168,13 +149,14 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t *pbuf, uint16_t length) {
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
 static int8_t CDC_Receive_FS(uint8_t *Buf, uint32_t *Len) {
-
-    strncat(ReceivedData, (const char *) Buf, sizeof(char) * *Len);
     USBD_CDC_ReceivePacket(hUsbDevice_0);
-    for (int i = 0; i < strlen(ReceivedData); i++) {
-        if (ReceivedData[i] == '\n') {
+    if (!morse_code_active) {
+        strncat(ReceivedData, (const char *) Buf, sizeof(char) * (*Len));
 
-            data_has_arrived(ReceivedData);
+        for (int i = 0; i < strlen(ReceivedData); i++) {
+            if (ReceivedData[i] == '\n') {
+                data_has_arrived(ReceivedData);
+            }
         }
     }
 
@@ -194,18 +176,14 @@ static int8_t CDC_Receive_FS(uint8_t *Buf, uint32_t *Len) {
   */
 uint8_t CDC_Transmit_FS(uint8_t *Buf, uint16_t Len) {
     uint8_t result = USBD_OK;
-    /* USER CODE BEGIN 7 */
     memcpy(UserTxBufferFS, Buf, sizeof(char) * Len);
     USBD_CDC_SetTxBuffer(hUsbDevice_0, UserTxBufferFS, Len);
     result = USBD_CDC_TransmitPacket(hUsbDevice_0);
-    if (result != USBD_OK) {
-        while (1) {
-            HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_15);
-            HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_15);
-            HAL_Delay(1000);
-        }
-    }
-    /* USER CODE END 7 */
+//    if (result != USBD_OK) {
+    // No need to handle this
+//        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_12, GPIO_PIN_SET);
+//        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_SET);
+//    }
     return result;
 }
 

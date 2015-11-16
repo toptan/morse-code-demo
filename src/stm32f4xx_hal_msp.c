@@ -34,40 +34,21 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
 
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
 /**
   * Initializes the Global MSP.
   */
-void HAL_MspInit(void)
-{
-  /* USER CODE BEGIN MspInit 0 */
-
-  /* USER CODE END MspInit 0 */
-
-  HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
-
-  /* System interrupt init*/
-  /* SysTick_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
-
-  /* USER CODE BEGIN MspInit 1 */
-
-  /* USER CODE END MspInit 1 */
+void HAL_MspInit(void) {
+    HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
+    /* System interrupt init */
+    /* SysTick_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
-/* USER CODE BEGIN 1 */
-
-/* USER CODE END 1 */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
+void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim) {
+    /* Timer 3 interrupt configuration */
+    __HAL_RCC_TIM3_CLK_ENABLE();
+    HAL_NVIC_SetPriority(TIM3_IRQn, 4, 0);
+    HAL_NVIC_EnableIRQ(TIM3_IRQn);
+}
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

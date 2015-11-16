@@ -1,9 +1,17 @@
 /* Includes ------------------------------------------------------------------*/
 #include <usbd_cdc_if.h>
 #include <string.h>
-//#include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal.h"
 #include "usb_device.h"
 #include "main.h"
+
+#define MSG_RECEIVED               "MESSAGE RECEIVED\nRETRANSMITTING VIA MORSE CODE\n"
+#define MSG_READY                  "READY TO RECEIVE MESSAGE\n"
+#define MSG_MORSE_CODE_TRANSMITTED "MESSAGE RETRANSMITTED VIA MORSE CODE\n"
+
+volatile int morse_code_active = 0;
+TIM_HandleTypeDef TimHandle;
+uint32_t uwPrescalerValue = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -15,11 +23,27 @@ int main(void) {
     HAL_Init();
     /* Configure the system clock */
     SystemClock_Config();
+    /* Initialize timer */
+    uwPrescalerValue = (uint32_t) ((SystemCoreClock / 2) / 10000) - 1;
+    TimHandle.Instance = TIM3;
+    TimHandle.Init.Period = 1000 - 1;
+    TimHandle.Init.Prescaler = uwPrescalerValue;
+    TimHandle.Init.ClockDivision = 0;
+    TimHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
+    HAL_TIM_Base_Init(&TimHandle);
+    HAL_TIM_Base_Start_IT(&TimHandle);
+
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
     MX_USB_DEVICE_Init();
+
+
     /* Infinite loop */
+    HAL_Delay(500);
+    CDC_Transmit_FS((uint8_t *) MSG_READY, strlen(MSG_READY));
     while (1) {
+//        HAL_Delay(200);
+//        HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_12);
     }
 }
 
@@ -28,7 +52,7 @@ int main(void) {
 void SystemClock_Config(void) {
     RCC_OscInitTypeDef RCC_OscInitStruct;
     RCC_ClkInitTypeDef RCC_ClkInitStruct;
-    __PWR_CLK_ENABLE();
+    __HAL_RCC_PWR_CLK_ENABLE();
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSEState = RCC_HSE_ON;
@@ -49,18 +73,24 @@ void SystemClock_Config(void) {
     HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
     /* SysTick_IRQn interrupt configuration */
     HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+
+    if (HAL_GetREVID() == 0x1001) {
+        /* Enable the Flash prefetch */
+        __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
+    }
+
 }
 
 void MX_GPIO_Init(void) {
     /* GPIO Ports Clock Enable */
-    __GPIOA_CLK_ENABLE();
-    __GPIOB_CLK_ENABLE();
-    __GPIOC_CLK_ENABLE();
-    __GPIOD_CLK_ENABLE();
-    __GPIOE_CLK_ENABLE();
-    __GPIOF_CLK_ENABLE();
-    __GPIOG_CLK_ENABLE();
-    __GPIOH_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOD_CLK_ENABLE();
+    __HAL_RCC_GPIOE_CLK_ENABLE();
+    __HAL_RCC_GPIOF_CLK_ENABLE();
+    __HAL_RCC_GPIOG_CLK_ENABLE();
+    __HAL_RCC_GPIOH_CLK_ENABLE();
 
     /*Configure GPIO pins : LED1 Pin, LED2 Pin */
     GPIO_InitTypeDef GPIO_InitStruct;
@@ -72,8 +102,54 @@ void MX_GPIO_Init(void) {
 }
 
 void data_has_arrived(char *data) {
-    CDC_Transmit_FS(data, strlen(data));
+//    CDC_Transmit_FS((uint8_t *)data, strlen(data));
+    morse_code_active = 1;
+//    HAL_Delay(500);
+//    CDC_Transmit_FS((uint8_t *) MSG_RECEIVED, strlen(MSG_RECEIVED));
+//    CDC_Transmit_FS((uint8_t *) data, strlen(data));
     memset(data, '\0', 512);
+//    for (int i = 0; i < 10; i++) {
+//        HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_15);
+//        HAL_Delay(250);
+//    }
+//    morse_code_active = 0;
+
+//    CDC_Transmit_FS((uint8_t *) MSG_MORSE_CODE_TRANSMITTED, strlen(MSG_MORSE_CODE_TRANSMITTED));
+}
+
+void play_sos() {
+    for (int i = 0; i < 3; i++) {
+        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_SET);
+        HAL_Delay(100);
+        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_RESET);
+        HAL_Delay(100);
+    }
+    HAL_Delay(200);
+    for (int i = 0; i < 3; i++) {
+        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_SET);
+        HAL_Delay(300);
+        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_RESET);
+        HAL_Delay(100);
+    }
+    HAL_Delay(200);
+    for (int i = 0; i < 3; i++) {
+        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_SET);
+        HAL_Delay(100);
+        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_RESET);
+        HAL_Delay(100);
+    }
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+    if (morse_code_active == 1) {
+        NVIC_DisableIRQ(TIM3_IRQn);
+        CDC_Transmit_FS((uint8_t *) MSG_RECEIVED, strlen(MSG_RECEIVED));
+        play_sos();
+        CDC_Transmit_FS((uint8_t *) MSG_MORSE_CODE_TRANSMITTED, strlen(MSG_MORSE_CODE_TRANSMITTED));
+        CDC_Transmit_FS((uint8_t *) MSG_READY, strlen(MSG_READY));
+        NVIC_EnableIRQ(TIM3_IRQn);
+        morse_code_active = 0;
+    }
 }
 
 #ifdef USE_FULL_ASSERT

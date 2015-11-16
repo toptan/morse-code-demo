@@ -35,30 +35,20 @@
 #include "stm32f4xx.h"
 #include "stm32f4xx_it.h"
 
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
 /* External variables --------------------------------------------------------*/
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
+extern TIM_HandleTypeDef TimHandle;
 
 /******************************************************************************/
-/*            Cortex-M4 Processor Interruption and Exception Handlers         */ 
+/*            Cortex-M4 Processor Interruption and Exception Handlers         */
 /******************************************************************************/
 
 /**
 * @brief This function handles System tick timer.
 */
-void SysTick_Handler(void)
-{
-  /* USER CODE BEGIN SysTick_IRQn 0 */
-
-  /* USER CODE END SysTick_IRQn 0 */
-  HAL_IncTick();
-  HAL_SYSTICK_IRQHandler();
-  /* USER CODE BEGIN SysTick_IRQn 1 */
-
-  /* USER CODE END SysTick_IRQn 1 */
+void SysTick_Handler(void) {
+    HAL_IncTick();
+    HAL_SYSTICK_IRQHandler();
 }
 
 /******************************************************************************/
@@ -71,18 +61,11 @@ void SysTick_Handler(void)
 /**
 * @brief This function handles USB On The Go FS global interrupt.
 */
-void OTG_FS_IRQHandler(void)
-{
-  /* USER CODE BEGIN OTG_FS_IRQn 0 */
-
-  /* USER CODE END OTG_FS_IRQn 0 */
-  HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
-  /* USER CODE BEGIN OTG_FS_IRQn 1 */
-
-  /* USER CODE END OTG_FS_IRQn 1 */
+void OTG_FS_IRQHandler(void) {
+    HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
 }
 
-/* USER CODE BEGIN 1 */
-
-/* USER CODE END 1 */
+void TIM3_IRQHandler(void) {
+    HAL_TIM_IRQHandler(&TimHandle);
+}
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
