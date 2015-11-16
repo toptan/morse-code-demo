@@ -4,6 +4,7 @@
 #include "stm32f4xx_hal.h"
 #include "usb_device.h"
 #include "main.h"
+#include "morse.h"
 
 #define MSG_RECEIVED               "MESSAGE RECEIVED\nRETRANSMITTING VIA MORSE CODE\n"
 #define MSG_READY                  "READY TO RECEIVE MESSAGE\n"
@@ -12,6 +13,7 @@
 volatile int morse_code_active = 0;
 TIM_HandleTypeDef TimHandle;
 uint32_t uwPrescalerValue = 0;
+char message[1024];
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -19,10 +21,14 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 
 int main(void) {
+    memset(message, 0, 1024);
+
     /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
     HAL_Init();
+
     /* Configure the system clock */
     SystemClock_Config();
+
     /* Initialize timer */
     uwPrescalerValue = (uint32_t) ((SystemCoreClock / 2) / 10000) - 1;
     TimHandle.Instance = TIM3;
@@ -37,13 +43,12 @@ int main(void) {
     MX_GPIO_Init();
     MX_USB_DEVICE_Init();
 
-
-    /* Infinite loop */
+    /* Allow USB subsys to settle and send initial prompt */
     HAL_Delay(500);
     CDC_Transmit_FS((uint8_t *) MSG_READY, strlen(MSG_READY));
+
+    /* Infinite loop */
     while (1) {
-//        HAL_Delay(200);
-//        HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_12);
     }
 }
 
@@ -102,19 +107,10 @@ void MX_GPIO_Init(void) {
 }
 
 void data_has_arrived(char *data) {
-//    CDC_Transmit_FS((uint8_t *)data, strlen(data));
     morse_code_active = 1;
-//    HAL_Delay(500);
-//    CDC_Transmit_FS((uint8_t *) MSG_RECEIVED, strlen(MSG_RECEIVED));
-//    CDC_Transmit_FS((uint8_t *) data, strlen(data));
+    strncpy(message, data, 1024);
+    strupr(message);
     memset(data, '\0', 512);
-//    for (int i = 0; i < 10; i++) {
-//        HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_15);
-//        HAL_Delay(250);
-//    }
-//    morse_code_active = 0;
-
-//    CDC_Transmit_FS((uint8_t *) MSG_MORSE_CODE_TRANSMITTED, strlen(MSG_MORSE_CODE_TRANSMITTED));
 }
 
 void play_sos() {
@@ -144,8 +140,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     if (morse_code_active == 1) {
         NVIC_DisableIRQ(TIM3_IRQn);
         CDC_Transmit_FS((uint8_t *) MSG_RECEIVED, strlen(MSG_RECEIVED));
-        play_sos();
+        play_message(message);
         CDC_Transmit_FS((uint8_t *) MSG_MORSE_CODE_TRANSMITTED, strlen(MSG_MORSE_CODE_TRANSMITTED));
+        HAL_Delay(100);
         CDC_Transmit_FS((uint8_t *) MSG_READY, strlen(MSG_READY));
         NVIC_EnableIRQ(TIM3_IRQn);
         morse_code_active = 0;
