@@ -31,7 +31,10 @@
 */
 
 /* Includes ------------------------------------------------------------------*/
+#include <string.h>
 #include "usbd_cdc_if.h"
+#include "main.h"
+
 /* USER CODE BEGIN INCLUDE */
 /* USER CODE END INCLUDE */
 
@@ -59,8 +62,10 @@
 /* USER CODE BEGIN PRIVATE DEFINES  */
 /* Define size for the receive and transmit buffer over CDC */
 /* It's up to user to redefine and/or remove those define */
-#define APP_RX_DATA_SIZE  4
-#define APP_TX_DATA_SIZE  4
+#define APP_RX_DATA_SIZE  64
+#define APP_TX_DATA_SIZE  64
+#define APP_MAX_DATA_SIZE 512
+
 /* USER CODE END PRIVATE DEFINES */
 /**
   * @}
@@ -86,6 +91,9 @@ uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
 
 /* Send Data over USB CDC are stored in this buffer       */
 uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
+
+/* Maximum data size for the message */
+char ReceivedData[APP_MAX_DATA_SIZE];
 
 /* USB handler declaration */
 /* Handle for USB Full Speed IP */
@@ -147,6 +155,7 @@ static int8_t CDC_Init_FS(void) {
     /* Set Application Buffers */
     USBD_CDC_SetTxBuffer(hUsbDevice_0, UserTxBufferFS, 0);
     USBD_CDC_SetRxBuffer(hUsbDevice_0, UserRxBufferFS);
+    memset(ReceivedData, 0x00, APP_MAX_DATA_SIZE);
     return (USBD_OK);
     /* USER CODE END 3 */
 }
@@ -242,7 +251,7 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t *pbuf, uint16_t length) {
   *           
   *         @note
   *         This function will block any OUT packet reception on USB endpoint 
-  *         untill exiting this function. If you exit this function before transfer
+  *         until exiting this function. If you exit this function before transfer
   *         is complete on CDC interface (ie. using DMA controller) it will result 
   *         in receiving more data while previous ones are still not sent.
   *                 
@@ -251,9 +260,17 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t *pbuf, uint16_t length) {
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
 static int8_t CDC_Receive_FS(uint8_t *Buf, uint32_t *Len) {
-    /* USER CODE BEGIN 6 */
+
+    strncat(ReceivedData, (const char *) Buf, sizeof(char) * *Len);
+    USBD_CDC_ReceivePacket(hUsbDevice_0);
+    for (int i = 0; i < strlen(ReceivedData); i++) {
+        if (ReceivedData[i] == '\n') {
+
+            data_has_arrived(ReceivedData);
+        }
+    }
+
     return (USBD_OK);
-    /* USER CODE END 6 */
 }
 
 /**
@@ -270,8 +287,16 @@ static int8_t CDC_Receive_FS(uint8_t *Buf, uint32_t *Len) {
 uint8_t CDC_Transmit_FS(uint8_t *Buf, uint16_t Len) {
     uint8_t result = USBD_OK;
     /* USER CODE BEGIN 7 */
-    USBD_CDC_SetTxBuffer(hUsbDevice_0, Buf, Len);
+    memcpy(UserTxBufferFS, Buf, sizeof(char) * Len);
+    USBD_CDC_SetTxBuffer(hUsbDevice_0, UserTxBufferFS, Len);
     result = USBD_CDC_TransmitPacket(hUsbDevice_0);
+    if (result != USBD_OK) {
+        while (1) {
+            HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_15);
+            HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_15);
+            HAL_Delay(1000);
+        }
+    }
     /* USER CODE END 7 */
     return result;
 }

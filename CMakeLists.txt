@@ -20,6 +20,7 @@ set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -nostartfiles")
 # Linker flags
 set(LINKER_FLAGS "${CMAKE_C_FLAGS}")
 # This is for STM32F407VG device. Change according to your needs.
+set(LINKER_FLAGS "${LINKER_FLAGS} --specs=/usr/local/arm-none-eabi/lib/thumb/nosys.specs")
 set(LINKER_FLAGS "${LINKER_FLAGS} -T${CMAKE_SOURCE_DIR}/link/STM32F407VG_FLASH.ld")
 set(LINKER_FLAGS "${LINKER_FLAGS} -Wl,--gc-sections")
 
@@ -28,6 +29,7 @@ include_directories(${CMAKE_SOURCE_DIR}/driver/cmsis/include)
 include_directories(${CMAKE_SOURCE_DIR}/driver/hal/include)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
+link_directories(/usr/local/arm-none-eabi/lib/thumb/)
 # System source files
 set(SYSTEM_FILES ${CMAKE_SOURCE_DIR}/driver/cmsis/src/system_stm32f4xx.c)
 
