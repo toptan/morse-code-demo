@@ -1,7 +1,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include <usbd_cdc_if.h>
 #include <string.h>
-#include "stm32f4xx_hal.h"
+//#include "stm32f4xx_hal.h"
 #include "usb_device.h"
 #include "main.h"
 
@@ -51,13 +51,6 @@ void SystemClock_Config(void) {
     HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
-/** Configure pins as
-        * Analog
-        * Input
-        * Output
-        * EVENT_OUT
-        * EXTI
-*/
 void MX_GPIO_Init(void) {
     /* GPIO Ports Clock Enable */
     __GPIOA_CLK_ENABLE();
@@ -69,7 +62,7 @@ void MX_GPIO_Init(void) {
     __GPIOG_CLK_ENABLE();
     __GPIOH_CLK_ENABLE();
 
-    /*Configure GPIO pins : LED1_Pin LED2_Pin */
+    /*Configure GPIO pins : LED1 Pin, LED2 Pin */
     GPIO_InitTypeDef GPIO_InitStruct;
     GPIO_InitStruct.Pin = GPIO_PIN_12 | GPIO_PIN_15;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -81,15 +74,7 @@ void MX_GPIO_Init(void) {
 void data_has_arrived(char *data) {
     CDC_Transmit_FS(data, strlen(data));
     memset(data, '\0', 512);
-//    while(1) {
-//        HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_15);
-//        HAL_Delay(1000);
-//    }
 }
-
-/* USER CODE BEGIN 4 */
-
-/* USER CODE END 4 */
 
 #ifdef USE_FULL_ASSERT
 
@@ -108,13 +93,5 @@ void assert_failed(uint8_t *file, uint32_t line) {
 }
 
 #endif
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-*/
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
