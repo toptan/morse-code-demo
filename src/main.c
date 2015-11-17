@@ -22,15 +22,12 @@ static void MX_GPIO_Init(void);
 
 int main(void) {
     memset(message, 0, 1024);
-
     /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
     HAL_Init();
-
     /* Configure the system clock */
     SystemClock_Config();
-
     /* Initialize timer */
-    uwPrescalerValue = (uint32_t) ((SystemCoreClock / 2) / 10000) - 1;
+    uwPrescalerValue = (uint32_t)((SystemCoreClock / 2) / 10000) - 1;
     TimHandle.Instance = TIM3;
     TimHandle.Init.Period = 1000 - 1;
     TimHandle.Init.Prescaler = uwPrescalerValue;
@@ -38,11 +35,9 @@ int main(void) {
     TimHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
     HAL_TIM_Base_Init(&TimHandle);
     HAL_TIM_Base_Start_IT(&TimHandle);
-
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
     MX_USB_DEVICE_Init();
-
     /* Allow USB subsys to settle and send initial prompt */
     HAL_Delay(500);
     CDC_Transmit_FS((uint8_t *) MSG_READY, strlen(MSG_READY));
@@ -52,8 +47,9 @@ int main(void) {
     }
 }
 
-/** System Clock Configuration
-*/
+/**
+ * System Clock Configuration
+ */
 void SystemClock_Config(void) {
     RCC_OscInitTypeDef RCC_OscInitStruct;
     RCC_ClkInitTypeDef RCC_ClkInitStruct;
@@ -83,9 +79,11 @@ void SystemClock_Config(void) {
         /* Enable the Flash prefetch */
         __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
     }
-
 }
 
+/**
+ * GPIO Configuration
+ */
 void MX_GPIO_Init(void) {
     /* GPIO Ports Clock Enable */
     __HAL_RCC_GPIOA_CLK_ENABLE();
@@ -96,7 +94,6 @@ void MX_GPIO_Init(void) {
     __HAL_RCC_GPIOF_CLK_ENABLE();
     __HAL_RCC_GPIOG_CLK_ENABLE();
     __HAL_RCC_GPIOH_CLK_ENABLE();
-
     /*Configure GPIO pins : LED1 Pin, LED2 Pin */
     GPIO_InitTypeDef GPIO_InitStruct;
     GPIO_InitStruct.Pin = GPIO_PIN_12 | GPIO_PIN_15;
@@ -106,6 +103,9 @@ void MX_GPIO_Init(void) {
     HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 }
 
+/**
+ * A callback that notifies that data has arrived and should be played as morse code.
+ */
 void data_has_arrived(char *data) {
     morse_code_active = 1;
     strncpy(message, data, 1024);
@@ -113,29 +113,9 @@ void data_has_arrived(char *data) {
     memset(data, '\0', 512);
 }
 
-void play_sos() {
-    for (int i = 0; i < 3; i++) {
-        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_SET);
-        HAL_Delay(100);
-        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_RESET);
-        HAL_Delay(100);
-    }
-    HAL_Delay(200);
-    for (int i = 0; i < 3; i++) {
-        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_SET);
-        HAL_Delay(300);
-        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_RESET);
-        HAL_Delay(100);
-    }
-    HAL_Delay(200);
-    for (int i = 0; i < 3; i++) {
-        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_SET);
-        HAL_Delay(100);
-        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_RESET);
-        HAL_Delay(100);
-    }
-}
-
+/**
+ * A callback when timer period has elapsed.
+ */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     if (morse_code_active == 1) {
         NVIC_DisableIRQ(TIM3_IRQn);

@@ -7,4 +7,4 @@
 
 void play_message(const char *message);
 
-#endif //MORSE_CODE_DEMO_MORSE_H
+#endif  // MORSE_CODE_DEMO_MORSE_H

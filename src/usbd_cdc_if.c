@@ -67,10 +67,10 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t *pbuf, uint16_t length);
 static int8_t CDC_Receive_FS(uint8_t *pbuf, uint32_t *Len);
 
 USBD_CDC_ItfTypeDef USBD_Interface_fops_FS = {
-        CDC_Init_FS,
-        CDC_DeInit_FS,
-        CDC_Control_FS,
-        CDC_Receive_FS
+    CDC_Init_FS,
+    CDC_DeInit_FS,
+    CDC_Control_FS,
+    CDC_Receive_FS
 };
 
 /**
@@ -101,7 +101,7 @@ static int8_t CDC_DeInit_FS(void) {
 /**
   * @brief  CDC_Control_FS
   *         Manage the CDC class requests
-  * @param  cmd: Command code            
+  * @param  cmd: Command code
   * @param  pbuf: Buffer containing command data (request parameters)
   * @param  length: Number of data to be sent (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
@@ -110,22 +110,31 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t *pbuf, uint16_t length) {
     switch (cmd) {
         case CDC_SEND_ENCAPSULATED_COMMAND:
             break;
+
         case CDC_GET_ENCAPSULATED_RESPONSE:
             break;
+
         case CDC_SET_COMM_FEATURE:
             break;
+
         case CDC_GET_COMM_FEATURE:
             break;
+
         case CDC_CLEAR_COMM_FEATURE:
             break;
+
         case CDC_SET_LINE_CODING:
             break;
+
         case CDC_GET_LINE_CODING:
             break;
+
         case CDC_SET_CONTROL_LINE_STATE:
             break;
+
         case CDC_SEND_BREAK:
             break;
+
         default:
             break;
     }
@@ -135,21 +144,22 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t *pbuf, uint16_t length) {
 
 /**
   * @brief  CDC_Receive_FS
-  *         Data received over USB OUT endpoint are sent over CDC interface 
+  *         Data received over USB OUT endpoint are sent over CDC interface
   *         through this function.
-  *           
+  *
   *         @note
-  *         This function will block any OUT packet reception on USB endpoint 
+  *         This function will block any OUT packet reception on USB endpoint
   *         until exiting this function. If you exit this function before transfer
-  *         is complete on CDC interface (ie. using DMA controller) it will result 
+  *         is complete on CDC interface (ie. using DMA controller) it will result
   *         in receiving more data while previous ones are still not sent.
-  *                 
+  *
   * @param  Buf: Buffer of data to be received
   * @param  Len: Number of data received (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
 static int8_t CDC_Receive_FS(uint8_t *Buf, uint32_t *Len) {
     USBD_CDC_ReceivePacket(hUsbDevice_0);
+
     if (!morse_code_active) {
         strncat(ReceivedData, (const char *) Buf, sizeof(char) * (*Len));
 
@@ -165,27 +175,19 @@ static int8_t CDC_Receive_FS(uint8_t *Buf, uint32_t *Len) {
 
 /**
   * @brief  CDC_Transmit_FS
-  *         Data send over USB IN endpoint are sent over CDC interface 
-  *         through this function.           
+  *         Data send over USB IN endpoint are sent over CDC interface
+  *         through this function.
   *         @note
-  *         
-  *                 
+  *
+  *
   * @param  Buf: Buffer of data to be send
   * @param  Len: Number of data to be send (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL or USBD_BUSY
   */
 uint8_t CDC_Transmit_FS(uint8_t *Buf, uint16_t Len) {
-    uint8_t result = USBD_OK;
     memcpy(UserTxBufferFS, Buf, sizeof(char) * Len);
     USBD_CDC_SetTxBuffer(hUsbDevice_0, UserTxBufferFS, Len);
-    result = USBD_CDC_TransmitPacket(hUsbDevice_0);
-//    if (result != USBD_OK) {
-    // No need to handle this
-//        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_12, GPIO_PIN_SET);
-//        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_SET);
-//    }
-    return result;
+    return USBD_CDC_TransmitPacket(hUsbDevice_0);
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-

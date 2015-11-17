@@ -44,8 +44,8 @@ extern TIM_HandleTypeDef TimHandle;
 /******************************************************************************/
 
 /**
-* @brief This function handles System tick timer.
-*/
+ * @brief This function handles System tick timer.
+ */
 void SysTick_Handler(void) {
     HAL_IncTick();
     HAL_SYSTICK_IRQHandler();
@@ -59,12 +59,15 @@ void SysTick_Handler(void) {
 /******************************************************************************/
 
 /**
-* @brief This function handles USB On The Go FS global interrupt.
-*/
+ * @brief This function handles USB On The Go FS global interrupt.
+ */
 void OTG_FS_IRQHandler(void) {
     HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
 }
 
+/**
+ * @brief This function handles timer 3 global interrupt.
+ */
 void TIM3_IRQHandler(void) {
     HAL_TIM_IRQHandler(&TimHandle);
 }

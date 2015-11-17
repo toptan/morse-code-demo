@@ -56,7 +56,7 @@
 /** @defgroup USBD_DESC_Private_Defines
   * @{
   */
-#define USBD_VID                        0x1234
+#define USBD_VID                        0x0483
 #define USBD_LANGID_STRING              1033
 #define USBD_MANUFACTURER_STRING        (uint8_t *) "Mikroelektronika"
 #define USBD_PID_FS                     22336
